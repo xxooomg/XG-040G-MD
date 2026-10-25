@@ -3,12 +3,6 @@ name: Build ImmortalWrt XG-040G-MD (Anti-Brick & Stable IPv6)
 on:
   repository_dispatch:
   workflow_dispatch:
-    inputs:
-      ssh:
-        description: 'SSH connection to Actions (for debugging)'
-        required: false
-        default: 'false'
-        type: boolean
 
 jobs:
   build:
@@ -54,7 +48,6 @@ jobs:
         CONFIG_TARGET_airoha_armv8_DEVICE_nokia_xg-040g-md=y
 
         # ==================== 2. 防砖安全与镜像格式支持 ====================
-        # 确保同时输出 factory (工厂引导可用) 和 sysupgrade 镜像，防止因格式不对变砖
         CONFIG_TARGET_IMAGES_GZIP=y
         CONFIG_TARGET_ROOTFS_PARTSIZE=800
 
@@ -73,7 +66,6 @@ jobs:
         CONFIG_PACKAGE_odhcp6c_ext_cer_id=0
         CONFIG_PACKAGE_odhcpd-ipv6only=y
         CONFIG_PACKAGE_luci-proto-ipv6=y
-        # 强化 IPv6 邻居自动重连与掉线防护
         CONFIG_PACKAGE_kmod-rtnl-socket=y
         CONFIG_PACKAGE_kmod-inet6-ah=y
         CONFIG_PACKAGE_kmod-inet6-esp=y
@@ -113,10 +105,6 @@ jobs:
         # 4. 让配置生效并补全默认项
         make defconfig
 
-    - name: SSH connection to Actions (Debugging)
-      uses: P3TERX/ssh2action@v1.0.0
-      if: (github.event.inputs.ssh == 'true') && (github.event.inputs.ssh != 'success')
-
     - name: Download Package and Compile
       run: |
         cd openwrt
@@ -130,7 +118,6 @@ jobs:
         cd openwrt
         mkdir -p ../artifact
         rm -rf $(find . -type d -name "packages")
-        # 搜集所有生成的固件及打包压缩包，确保 factory 和 sysupgrade 都能被收集到
         find bin/targets/ -type f \( -name "*.bin" -o -name "*.tar.gz" -o -name "*.img" \) -exec cp {} ../artifact/ \;
 
     - name: Upload Firmware to Artifact
